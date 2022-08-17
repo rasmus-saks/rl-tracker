@@ -45,4 +45,5 @@ Use environment variables to configure the server:
 |---------------|-----------------------------------------------------------------------------|
 | PORT          | The port that the server will run under.<br/>Defaults to `8000`             |
 | FRONTEND_ROOT | Location of the frontend (the `build` folder).<br/>Defaults to `./frontend` |
+| PLUGIN_HOST   | Host/IP of the client running the plugin.<br/>Defaults to `localhost`       |
 

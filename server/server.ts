@@ -228,9 +228,10 @@ async function readBytes(connection: Deno.Conn, length: number) {
 
 async function pluginListener() {
     let lasterror = {name: ""}
+    const hostname = Deno.env.get("PLUGIN_HOST") ?? "localhost"
     while (true) {
         try {
-            const connection = await Deno.connect({hostname: "192.168.1.69", port: 8081})
+            const connection = await Deno.connect({hostname, port: 8081})
             lasterror = {name: ""}
             while (true) {
                 await readPacket(connection)
