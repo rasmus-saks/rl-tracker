@@ -1,0 +1,43 @@
+{
+  "name": "rl-tracker-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@ant-design/icons": "4.7.0",
+    "@stomp/stompjs": "6.1.2",
+    "@types/node": "16.11.12",
+    "@types/react": "17.0.37",
+    "@types/react-dom": "17.0.11",
+    "antd": "4.17.2",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "react-scripts": "4.0.3",
+    "typescript": "4.5.2",
+    "web-vitals": "2.1.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "build-docker": "docker run --rm --privileged multiarch/qemu-user-static --reset -p yes && docker buildx build --platform linux/arm/v7 -t ghcr.io/rasmus-saks/rl-frontend --push ."
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

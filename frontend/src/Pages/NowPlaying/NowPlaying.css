@@ -1,0 +1,22 @@
+.table-row-orange {
+    background-color: rgba(231, 141, 0, 0.45);
+}
+
+table a {
+    color: rgb(211, 211, 211);
+}
+table a:hover {
+    color: white;
+}
+
+.table-row-orange .ant-table-cell-row-hover {
+    background-color: rgba(231, 141, 0, 0.20) !important;
+}
+
+.table-row-blue {
+    background-color: rgb(42, 144, 192, 0.45);
+}
+
+.table-row-blue .ant-table-cell-row-hover {
+    background-color: rgba(42, 144, 192, 0.20) !important;
+}

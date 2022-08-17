@@ -1,0 +1,40 @@
+#pragma once
+#define WIN32_LEAN_AND_MEAN
+#include "tcp_connection.h"
+#include <google/protobuf/message.h>
+#include <google/protobuf/util/json_util.h>
+#include "StreamPlugin.pb.h"
+#include "spdlog/spdlog.h"
+#include <list>
+
+class tcp_server
+{
+public:
+	tcp_server(boost::asio::io_context& io_context,
+		unsigned short port);
+	void broadcast_message(const std::string& message);
+
+
+	void broadcast_event(google::protobuf::Message* event)
+	{
+		auto* envelope = new EventEnvelope();
+		auto* packedEvent = new google::protobuf::Any();
+		packedEvent->PackFrom(*event);
+		envelope->set_allocated_event(packedEvent);
+		for (const auto& connection : connections)
+		{
+			connection->send_message(envelope);
+		}
+		delete envelope;
+	}
+
+private:
+	void start_accept();
+	void handle_accept(const tcp_connection::pointer& new_connection, const boost::system::error_code& error);
+
+	boost::asio::io_context& io_context_;
+	tcp::acceptor acceptor_;
+	std::list<tcp_connection::pointer> connections;
+	std::shared_ptr<spdlog::logger> logger;
+	void connection_closed(const tcp_connection::pointer& connection);
+};
