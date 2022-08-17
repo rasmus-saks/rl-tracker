@@ -1,5 +1,6 @@
 import {serve} from "https://deno.land/std@0.152.0/http/server.ts";
 import {serveDir, serveFile} from "https://deno.land/std@0.152.0/http/file_server.ts";
+import TcpConn = Deno.TcpConn;
 
 const pause = (ms: number) => new Promise(res => setTimeout(res, ms))
 const sockets = new Map<string, WebSocket>()
@@ -93,16 +94,11 @@ async function readPacket(connection: Deno.Conn) {
     // Read <length> bytes of message
     const data = await readBytes(connection, length)
     const decoder = new TextDecoder()
-    const rawJson = decoder.decode(data);
-    try {
-        // Decode JSON message and handle it
-        const dataObj = JSON.parse(rawJson)
-        handleEvent(dataObj)
-    } catch (e) {
-        console.log("Failed to handle packet:")
-        console.log(rawJson)
-        console.error(e)
-    }
+    const rawJson = decoder.decode(data)
+
+    // Decode JSON message and handle it
+    const dataObj = JSON.parse(rawJson)
+    handleEvent(dataObj)
 }
 
 function broadcast(message: any) {
@@ -232,8 +228,9 @@ async function pluginListener() {
     let lasterror = {name: ""}
     const hostname = Deno.env.get("PLUGIN_HOST") ?? "localhost"
     while (true) {
+        let connection: TcpConn | null = null
         try {
-            const connection = await Deno.connect({hostname, port: 8081})
+            connection = await Deno.connect({hostname, port: 8081})
             lasterror = {name: ""}
             while (true) {
                 await readPacket(connection)
@@ -243,6 +240,10 @@ async function pluginListener() {
                 console.error(e)
             }
             lasterror = e
+        } finally {
+            if (connection !== null) {
+                connection.close()
+            }
         }
         await pause(5000)
     }
