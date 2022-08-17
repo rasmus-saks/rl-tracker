@@ -82,6 +82,7 @@ const session: Session = {
     stats: {},
     currentPlaylist: null
 }
+let lastMatch: EventMatch | undefined = undefined
 
 async function readPacket(connection: Deno.Conn) {
     // Read 8 bytes of packet length (unsigned 64-bit integer)
@@ -105,12 +106,12 @@ async function readPacket(connection: Deno.Conn) {
 }
 
 function broadcast(message: any) {
-    for (const [key, value] of sockets) {
+    for (const [, value] of sockets) {
         value.send(JSON.stringify(message))
     }
 }
 
-function handleEvent(event: Event): any | null {
+function handleEvent(event: Event): void {
     console.log(`Received ${event.type}`)
     if (event.type === 'COUNTDOWN_BEGIN_EVENT' || event.type === 'GOAL_EVENT') {
         updateStats(event.match)
@@ -156,7 +157,7 @@ function updateStreak(event: MatchEndEvent) {
     const match = event.match
     const winner = event.winner
     if (winner === 'UNKNOWN_TEAM') return
-    const me = match.players.find(p => p.self)!!
+    const me = match.players.find(p => p.self)!
     const playlist = match.playlist
     const diff = new Date().getTime() - lastSessionUpdate.getTime()
     if (diff > SESSION_TIMEOUT) {
@@ -166,7 +167,7 @@ function updateStreak(event: MatchEndEvent) {
     }
     lastSessionUpdate = new Date()
     if (!session.stats[playlist]) {
-        const current = toPlaylistRank(me.ranks.find(r => r.playlist === playlist)!!)
+        const current = toPlaylistRank(me.ranks.find(r => r.playlist === playlist)!)
         session.stats[playlist] = {
             playlist, start: current, current, wins: 0, losses: 0, streak: 0
         }
@@ -182,7 +183,7 @@ function updateStreak(event: MatchEndEvent) {
 }
 
 function updateStats(match: EventMatch) {
-    const me = match.players.find(p => p.self)!!
+    const me = match.players.find(p => p.self)!
     const playlist = match.playlist
     const current = me.ranks.find(r => r.playlist === playlist)
     if (!current) return
@@ -195,6 +196,7 @@ function updateStats(match: EventMatch) {
     } else {
         session.stats[playlist].current = currentPlaylistRank
     }
+    lastMatch = match
 }
 
 function toFramePlayer(player: EventPlayer): any {
@@ -237,7 +239,7 @@ async function pluginListener() {
                 await readPacket(connection)
             }
         } catch (e) {
-            if (lasterror.name != e.name) {
+            if (lasterror.name !== e.name && lasterror.name !== "") {
                 console.error(e)
             }
             lasterror = e
@@ -264,10 +266,10 @@ serve(req => {
         }
         socket.onopen = () => {
             console.log(`Client id ${socketId} connected`)
-            broadcastStats()
+            broadcastStats(lastMatch)
         }
         return response
     }
-    return serveDir(req, {fsRoot})
+    return serveDir(req, {fsRoot, quiet: true})
 }, {port: +port})
 
