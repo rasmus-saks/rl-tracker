@@ -2,7 +2,7 @@ import {Client, StompSubscription} from "@stomp/stompjs";
 import {Frame} from "../Protocol/Types";
 
 export function getBrokerUrl(): string {
-    return new URLSearchParams(window.location.search).get("brokerUrl") ?? localStorage.getItem("brokerUrl") ?? process.env.REACT_APP_BROKER_URL!!;
+    return new URLSearchParams(window.location.search).get("websocketUrl") ?? localStorage.getItem("websocketUrl") ?? process.env.REACT_APP_WEBSOCKET_URL!!;
 }
 
 export type MessageSubscription<T> = {
