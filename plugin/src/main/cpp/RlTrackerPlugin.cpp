@@ -1,13 +1,13 @@
-#include "StreamPlugin.h"
+#include "RlTrackerPlugin.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "log/bakkes_sink.h"
 #define SERVER_PORT 8081
 
-BAKKESMOD_PLUGIN(StreamPlugin, "Stream overlay", "0.1", PLUGINTYPE_THREADED)
+BAKKESMOD_PLUGIN(RlTrackerPlugin, "RL Tracker", "0.1", PLUGINTYPE_THREADED)
 
 using asio::ip::tcp;
 
-void StreamPlugin::onLoad()
+void RlTrackerPlugin::onLoad()
 {
 	std::vector<spdlog::sink_ptr> sinks;
 	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
@@ -18,29 +18,29 @@ void StreamPlugin::onLoad()
 	logger = spdlog::get("default");
 
 	gameWrapper->HookEvent("Function GameEvent_TA.Countdown.BeginState",
-		std::bind(&StreamPlugin::countdownBegin, this, std::placeholders::_1));
+		std::bind(&RlTrackerPlugin::countdownBegin, this, std::placeholders::_1));
 	gameWrapper->HookEvent("Function TAGame.GameEvent_Soccar_TA.EventMatchEnded",
-		std::bind(&StreamPlugin::matchEnded, this, std::placeholders::_1));
+		std::bind(&RlTrackerPlugin::matchEnded, this, std::placeholders::_1));
 	gameWrapper->HookEvent("Function TAGame.GameEvent_Soccar_TA.EventPlayerScored",
-		std::bind(&StreamPlugin::playerScored, this, std::placeholders::_1));
+		std::bind(&RlTrackerPlugin::playerScored, this, std::placeholders::_1));
 	gameWrapper->HookEvent("Function TAGame.OnlineGameJoinGame_TA.OnInit",
-		std::bind(&StreamPlugin::testEvent, this, std::placeholders::_1));
-	mmrNotifier = gameWrapper->GetMMRWrapper().RegisterMMRNotifier(std::bind(&StreamPlugin::mmrCallback, this, std::placeholders::_1));
+		std::bind(&RlTrackerPlugin::testEvent, this, std::placeholders::_1));
+	mmrNotifier = gameWrapper->GetMMRWrapper().RegisterMMRNotifier(std::bind(&RlTrackerPlugin::mmrCallback, this, std::placeholders::_1));
 	// maybe enable this one day
-	//gameWrapper->SetTimeout(std::bind(&StreamPlugin::periodicStats, this, std::placeholders::_1), 2.0f);
+	//gameWrapper->SetTimeout(std::bind(&RlTrackerPlugin::periodicStats, this, std::placeholders::_1), 2.0f);
 	logger->info("Hooked into game events");
 	server = new tcp_server(io_context, SERVER_PORT);
 	logger->info("Starting TCP server");
 	io_context.run();
 }
 
-void StreamPlugin::onUnload()
+void RlTrackerPlugin::onUnload()
 {
 	io_context.stop();
 	logger->info("Stopped TCP server");
 }
 
-void StreamPlugin::countdownBegin(const std::string& eventName)
+void RlTrackerPlugin::countdownBegin(const std::string& eventName)
 {
 	updateLastPlaylist();
  	auto game = getCurrentGameState();
@@ -48,19 +48,19 @@ void StreamPlugin::countdownBegin(const std::string& eventName)
 	server->broadcast_json(event);
 }
 
-void StreamPlugin::periodicStats(GameWrapper* gameWrapper) {
+void RlTrackerPlugin::periodicStats(GameWrapper* gameWrapper) {
 	auto game = getCurrentGameState(gameWrapper);
 	if (!game.IsNull()) {
 		PeriodicStatsEvent event(buildMatch(game));
 		server->broadcast_json(event);
 	}
-	gameWrapper->SetTimeout(std::bind(&StreamPlugin::periodicStats, this, std::placeholders::_1), 2.0f);
+	gameWrapper->SetTimeout(std::bind(&RlTrackerPlugin::periodicStats, this, std::placeholders::_1), 2.0f);
 }
 
-void StreamPlugin::mmrCallback(UniqueIDWrapper uniqueId) {
+void RlTrackerPlugin::mmrCallback(UniqueIDWrapper uniqueId) {
 }
 
-void StreamPlugin::matchEnded(const std::string& eventName)
+void RlTrackerPlugin::matchEnded(const std::string& eventName)
 {
 	updateLastPlaylist();
 	auto game = getCurrentGameState(gameWrapper.get());
@@ -80,7 +80,7 @@ void StreamPlugin::matchEnded(const std::string& eventName)
 	}, 6.0f);
 }
 
-void StreamPlugin::updateLastPlaylist()
+void RlTrackerPlugin::updateLastPlaylist()
 {
 	auto game = getCurrentGameState();
 	if (!game.IsNull()) {
@@ -89,20 +89,20 @@ void StreamPlugin::updateLastPlaylist()
 	currentPlayerID = gameWrapper->GetUniqueID();
 }
 
-void StreamPlugin::playerScored(const std::string& eventName)
+void RlTrackerPlugin::playerScored(const std::string& eventName)
 {
 	updateLastPlaylist();
 	GoalEvent event(buildMatch(getCurrentGameState()));
 	server->broadcast_json(event);
 }
 
-ServerWrapper StreamPlugin::getCurrentGameState()
+ServerWrapper RlTrackerPlugin::getCurrentGameState()
 {
 	return getCurrentGameState(gameWrapper.get());
 }
 
 
-ServerWrapper StreamPlugin::getCurrentGameState(GameWrapper* gameWrapper)
+ServerWrapper RlTrackerPlugin::getCurrentGameState(GameWrapper* gameWrapper)
 {
 	if (gameWrapper->IsInReplay())
 	{
@@ -118,7 +118,7 @@ ServerWrapper StreamPlugin::getCurrentGameState(GameWrapper* gameWrapper)
 	}
 }
 
-std::list<Player> StreamPlugin::getMatchPlayers(ServerWrapper state)
+std::list<Player> RlTrackerPlugin::getMatchPlayers(ServerWrapper state)
 {
 	std::list<Player> players;
 	if (!state.IsNull())
@@ -134,13 +134,13 @@ std::list<Player> StreamPlugin::getMatchPlayers(ServerWrapper state)
 	return players;
 }
 
-PriWrapper StreamPlugin::findMe()
+PriWrapper RlTrackerPlugin::findMe()
 {
 	auto state = getCurrentGameState();
 	return state.GetLocalPrimaryPlayer().GetPRI();
 }
 
-Player StreamPlugin::getPlayer(PriWrapper priWrapper)
+Player RlTrackerPlugin::getPlayer(PriWrapper priWrapper)
 {
 	Player player;
 	auto steamid = priWrapper.GetUniqueIdWrapper().GetUID();
@@ -168,7 +168,7 @@ Player StreamPlugin::getPlayer(PriWrapper priWrapper)
 	return player;
 }
 
-void StreamPlugin::injectPlayerRanks(std::list<Rank>* ranks, UniqueIDWrapper uniqueId)
+void RlTrackerPlugin::injectPlayerRanks(std::list<Rank>* ranks, UniqueIDWrapper uniqueId)
 {
 	std::set<int> playlists{ PlaylistType::RANKEDSTANDARD, PlaylistType::RANKEDDOUBLES, PlaylistType::RANKEDDUEL };
 
@@ -188,13 +188,13 @@ void StreamPlugin::injectPlayerRanks(std::list<Rank>* ranks, UniqueIDWrapper uni
 	}
 }
 
-void StreamPlugin::testEvent(const std::string& eventName)
+void RlTrackerPlugin::testEvent(const std::string& eventName)
 {
  	TestEvent event(eventName);
  	server->broadcast_json(event);
 }
 
-Match StreamPlugin::buildMatch(ServerWrapper state)
+Match RlTrackerPlugin::buildMatch(ServerWrapper state)
 {
 	Match match;
 	std::list<Player> players = getMatchPlayers(state);

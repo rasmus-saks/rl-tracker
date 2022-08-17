@@ -17,7 +17,7 @@
 using json = nlohmann::json;
 
 
-class StreamPlugin : public BakkesMod::Plugin::BakkesModPlugin
+class RlTrackerPlugin : public BakkesMod::Plugin::BakkesModPlugin
 {
 public:
 	virtual void onLoad();
