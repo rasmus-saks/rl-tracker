@@ -1,0 +1,6 @@
+[submodule "plugin/third-party/bakkesmodsdk"]
+	path = plugin/third-party/bakkesmodsdk
+	url = https://github.com/bakkesmodorg/BakkesModSDK.git
+[submodule "plugin/third-party/spdlog"]
+	path = plugin/third-party/spdlog
+	url = https://github.com/gabime/spdlog
